@@ -1,2 +1,0 @@
-class DNSInterface(object):
-	pass
