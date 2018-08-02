@@ -1,0 +1,21 @@
+1) Install Docker on your MAC
+	
+2) Create A directory on your Mac
+
+	/Users/janraj/LoadBalancer
+		This is My Base Folder Where i have two sub folder
+	Janrajs-MacBook-Pro:LoadBalancer janraj$ ls
+	README		build		src		start.sh
+
+
+	All Build related files would be present in build 
+
+	All Main src code would be present in src
+
+	We will have test folder which generate code coverage and unit test cases
+
+3) just run start.sh 
+
+	Which runs the docker in background and sample process is up and running
+
+4) 127.0.0.1:8080 type from url, you will see an heelo world program 

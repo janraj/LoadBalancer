@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: netscalerIngress
+  labels:
+    app: netscalerIngress
+spec: 
+      serviceAccountName: cpx
+      containers:
+      - name: netscalerIngress
+        image: triton:v16.0
+        env:
+        # Set NetScaler Management IP
+        - name: "NS_IP"
+          value: "10.102.33.204"
+        # Set Protocol for Nitro
+        - name: "NS_PROTOCOL"
+          value: "HTTPS"
+           # Set port for Nitro
+        - name: "NS_PORT"
+          value: "5443"
+           # Set log level
+        - name: "LOGLEVEL"
+          value: "DEBUG"
+        - name: "EULA"
+          value: "yes"
+

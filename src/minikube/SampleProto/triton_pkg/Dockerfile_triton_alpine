@@ -1,0 +1,65 @@
+FROM alpine:3.7
+MAINTAINER NSCPX-Dev <NSCPX-Dev@citrite.net>
+ENV ALPINE_VERSION=3.7
+# These are always installed. Notes:
+#   * dumb-init: a proper init system for containers, to reap zombie children
+#   * bash: For entrypoint, and debugging
+#   * ca-certificates: for SSL verification during Pip and easy_install
+#   * python: the binaries themselves
+#   * py-setuptools: required only in major version 2, installs easy_install so we can install Pip.
+ENV PACKAGES="\
+  dumb-init \
+  bash \
+  ca-certificates \
+  python2 \
+  py-setuptools \
+  libffi-dev build-base py2-pip python2-dev openssl-dev \
+"
+RUN echo \
+  # replacing default repositories with edge ones
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" > /etc/apk/repositories \
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories \
+  # Add the packages, with a CDN-breakage fallback if needed
+  && apk add --no-cache $PACKAGES || \
+    (sed -i -e 's/dl-cdn/dl-4/g' /etc/apk/repositories && apk add --no-cache $PACKAGES) \
+  # turn back the clock -- so hacky!
+  && echo "http://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/main/" > /etc/apk/repositories \
+  # && echo "@edge-testing http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
+  # && echo "@edge-community http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
+  # && echo "@edge-main http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories \
+  # make some useful symlinks that are expected to exist
+  && if [[ ! -e /usr/bin/python ]];        then ln -sf /usr/bin/python2.7 /usr/bin/python; fi \
+  && if [[ ! -e /usr/bin/python-config ]]; then ln -sf /usr/bin/python2.7-config /usr/bin/python-config; fi \
+  && if [[ ! -e /usr/bin/easy_install ]];  then ln -sf /usr/bin/easy_install-2.7 /usr/bin/easy_install; fi \
+  # Install and upgrade Pip
+  && easy_install pip \
+  && pip install --upgrade pip \
+  && if [[ ! -e /usr/bin/pip ]]; then ln -sf /usr/bin/pip2.7 /usr/bin/pip; fi \
+  && pip install netaddr pyyaml requests[security] \
+  && echo
+ADD triton_ingress.tar.gz /var
+COPY triton_startup.sh /var/triton_startup.sh
+ENV NS_CONFIG_FRONT_END TRUE
+ENV NS_TYPE VPX
+ENV NS_USER nsroot
+ENV NS_PASSWORD nsroot
+ENV NS_PROTOCOL HTTPS
+ENV NS_PORT 443
+ENV LOGLEVEL INFO
+RUN mkdir -p /var/mps/tenants/root/ns_ssl_certs/
+RUN mkdir -p /var/mps/tenants/root/ns_ssl_keys/
+
+
+#Setup tools for service-discovery.
+RUN mkdir -p /tmp
+RUN (cd /tmp  && mv /var/triton_ingress/nitro-python.tar . &&\
+	tar xf nitro-python.tar && \
+	cd nitro-python-* && \
+	python setup.py install >> /dev/null && \
+	cd / && \
+	rm -rf /tmp/ns-11.0-63.16* && \
+	rm -rf /tmp/ns_nitro-python* && \
+	rm -rf /tmp/nitro-python-* )
+
+CMD ["bash", "/var/triton_startup.sh"]

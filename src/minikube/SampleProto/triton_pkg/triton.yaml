@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nsingresscontroller
+  labels:
+    app: nsingresscontroller
+spec: 
+      serviceAccountName: cpx
+      containers:
+      - name: nsingresscontroller
+        image: triton:4.0
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do sleep 30; done;" ]
+        env:
+        # Set kube api-server URL
+        - name: "kubernetes_url"
+          value: "https://192.168.99.100:8443"
+        # Set NetScaler Management IP
+        - name: "NS_IP"
+          value: "10.102.33.204"
+        # Set Protocol for Nitro
+        - name: "NS_PROTOCOL"
+          value: "HTTP"
+        # Set port for Nitro
+        - name: "NS_PORT"
+          value: "80"
+        # Set username for Nitro
+        - name: "NS_USER"
+          value: "nsroot"
+        # Set user password for Nitro
+        - name: "NS_PASSWORD"
+          value: "nsroot"
+        # Set log level
+        - name: "LOGLEVEL"
+          value: "DEBUG"
+        - name: "EULA"
+          value: "yes"
+        imagePullPolicy: Never
